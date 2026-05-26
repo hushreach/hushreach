@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>HushReach — Prototype v2</title>
+<style>
+:root {
+  --base: #111111;
+  --text: #F5F0E8;
+  --accent: #5B8A72;
+  --stone: #8A7E6B;
+  --danger: #C46B4D;
+  --amber: #B8860B;
+  --border: #222222;
+  --light-bg: #FAFAF5;
+  --light-text: #2A2A2A;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0A0A0A;
+  font-family: var(--font);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.phone-frame {
+  width: 375px;
+  height: 812px;
+  border: 3px solid #2A2A2A;
+  border-radius: 44px;
+  overflow: hidden;
+  position: relative;
+  background: var(--base);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+}
+
+.status-bar {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  position: relative;
+  z-index: 10;
+}
+
+.status-bar .time { font-size: 14px; font-weight: 600; color: var(--text); }
+.status-bar .icons { display: flex; gap: 6px; align-items: center; }
+.status-bar .icons span { font-size: 12px; color: var(--text); }
+
+.notch {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 28px;
+  background: #000;
+  border-radius: 0 0 16px 16px;
+  z-index: 11;
+}
+
+.screen-container {
+  position: relative;
+  height: calc(100% - 44px);
+  overflow: hidden;
+}
+
+.screen {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  padding: 24px 24px 32px;
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+  pointer-events: none;
+  overflow: hidden;
+  scrollbar-width: none;
+}
+.screen::-webkit-scrollbar { display: none; }
+.screen.active {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 24px;
+  color: var(--stone);
+  font-size: 13px;
+}
+.nav-controls button {
+  background: none;
+  border: 1px solid #333;
+  color: var(--text);
+  padding: 8px 16px;
+  font-size: 12px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  border-radius: 2px;
+}
+.nav-controls button:hover { border-color: var(--accent); }
+
+.screen-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  margin-bottom: 8px;
+  text-align: left;
+}
+.screen-subtitle {
+  font-size: 14px;
+  color: var(--stone);
+  margin-bottom: 32px;
+  line-height: 1.5;
+  font-weight: 300;
+}
+.btn-primary {
+  display: block;
+  width: 100%;
+  background: var(--accent);
+  color: var(--base);
+  border: none;
+  padding: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+}
+.btn-primary:active { opacity: 0.85; }
+.btn-secondary {
+  background: none;
+  border: none;
+  color: var(--stone);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 16px;
+  display: block;
+  text-align: center;
+}
+.input-field {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  font-size: 16px;
+  color: var(--text);
+  font-family: var(--font);
+  outline: none;
+}
+.input-field:focus { border-bottom-color: var(--accent); }
+.input-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--stone);
+  margin-bottom: 4px;
+  display: block;
+}
+.back-arrow {
+  font-size: 18px;
+  color: var(--text);
+  cursor: pointer;
+  margin-bottom: 24px;
+  display: inline-block;
+}
+
+.logo-mark {
+  display: inline-block;
+  position: relative;
+  font-size: 48px;
+  font-weight: 200;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+.logo-mark::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: -20px;
+  width: 32px;
+  height: 1.5px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0; right: 0;
+  padding: 16px 24px 24px;
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  font-size: 13px;
+  color: var(--stone);
+  background: linear-gradient(transparent, var(--base) 40%);
+}
+.bottom-nav span { cursor: pointer; position: relative; padding-bottom: 6px; }
+.bottom-nav span.active { color: var(--text); }
+.bottom-nav span.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 4px; height: 4px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.screen-light { background: var(--light-bg); }
+.screen-light .screen-title { color: var(--light-text); }
+.screen-light .screen-subtitle { color: #6B6B6B; }
+
+@media (max-width: 420px) {
+  body { padding: 0; }
+  .phone-frame {
+    width: 100%;
+    height: 100vh;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .notch { display: none; }
+  .nav-controls { display: none; }
+}
+
+@keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+
+/* === AMBIENT BACKGROUND EFFECTS === */
+
+/* Subtle grain texture overlay on the phone */
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  opacity: 0.025;
+  pointer-events: none;
+  z-index: 1;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* Soft ambient glow — shifts per screen */
+.screen::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  width: 140%;
+  height: 100%;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+.screen.active::before {
+  opacity: 1;
+}
+
+/* Each screen gets a slightly different glow position/color */
+#screen-1::before {
+  background: radial-gradient(ellipse at 30% 20%, rgba(91,138,114,0.04) 0%, transparent 60%);
+}
+#screen-2::before {
+  background: radial-gradient(ellipse at 70% 30%, rgba(91,138,114,0.035) 0%, transparent 55%);
+}
+#screen-3::before {
+  background: radial-gradient(ellipse at 50% 10%, rgba(91,138,114,0.03) 0%, transparent 50%);
+}
+#screen-4::before {
+  background: radial-gradient(ellipse at 20% 40%, rgba(91,138,114,0.04) 0%, transparent 60%);
+}
+#screen-5::before {
+  background: radial-gradient(ellipse at 60% 50%, rgba(91,138,114,0.03) 0%, transparent 50%);
+}
+#screen-6::before {
+  background: radial-gradient(ellipse at 40% 20%, rgba(91,138,114,0.04) 0%, transparent 60%);
+}
+#screen-7::before {
+  background: radial-gradient(ellipse at 50% 40%, rgba(91,138,114,0.06) 0%, transparent 50%);
+}
+#screen-8::before {
+  background: radial-gradient(ellipse at 30% 10%, rgba(196,107,77,0.025) 0%, transparent 50%);
+}
+#screen-9::before {
+  background: radial-gradient(ellipse at 50% 30%, rgba(196,107,77,0.03) 0%, transparent 55%);
+}
+#screen-10::before {
+  background: radial-gradient(ellipse at 50% 60%, rgba(91,138,114,0.05) 0%, transparent 60%);
+}
+
+/* Subtle dot grid pattern on body (behind phone) */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: radial-gradient(circle, rgba(91,138,114,0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Outer ambient glow behind the phone frame */
+body::after {
+  content: '';
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 700px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(91,138,114,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.phone-frame {
+  position: relative;
+  z-index: 2;
+}
+
+.nav-controls {
+  position: relative;
+  z-index: 2;
+}
+
+/* Accent line that pulses subtly on the splash screen */
+#screen-1 .logo-mark::after {
+  animation: breathe 3s ease-in-out infinite;
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; width: 32px; }
+  50% { opacity: 0.9; width: 40px; }
+}
+
+/* Subtle shimmer on the QR activated screen */
+#screen-7::after {
+  content: '';
+  position: absolute;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(91,138,114,0.08) 0%, transparent 60%);
+  pointer-events: none;
+  animation: qr-glow 2.5s ease-in-out infinite;
+}
+@keyframes qr-glow {
+  0%, 100% { opacity: 0.4; transform: translateX(-50%) scale(1); }
+  50% { opacity: 0.8; transform: translateX(-50%) scale(1.05); }
+}
+
+/* Active state pulsing dot enhancement */
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(91,138,114,0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(91,138,114,0); }
+}
+
+/* Light screen gets its own warm glow */
+.screen-light::before {
+  background: radial-gradient(ellipse at 50% 30%, rgba(91,138,114,0.04) 0%, transparent 60%) !important;
+}
+
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="notch"></div>
+  <div class="status-bar">
+    <span class="time">9:41</span>
+    <div class="icons"><span>&#9679;&#9679;&#9679;&#9679;</span> <span>&#8226;</span> <span>&#9608;</span></div>
+  </div>
+  <div class="screen-container">
+
+    <!-- Screen 1: Splash -->
+    <div class="screen active" id="screen-1">
+      <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;height:100%;padding-bottom:60px;">
+        <div class="logo-mark" style="margin-bottom:24px;">H</div>
+        <div style="font-size:32px;font-weight:700;letter-spacing:-0.04em;color:var(--text);margin-bottom:12px;">HushReach</div>
+        <div style="font-size:14px;color:var(--stone);font-weight:300;margin-bottom:80px;line-height:1.5;">The quiet way to stay reachable.</div>
+        <button class="btn-primary" onclick="goTo(2)">CREATE YOUR HUSHREACH</button>
+        <button class="btn-secondary" onclick="goTo(2)">sign in</button>
+      </div>
+    </div>
+
+    <!-- Screen 2: Login -->
+    <div class="screen" id="screen-2">
+      <div style="padding-top:40px;">
+        <h1 class="screen-title">Welcome back.</h1>
+        <p class="screen-subtitle">Your family's safety, one tap away.</p>
+        <button style="width:100%;background:#fff;color:#111;border:none;padding:14px;font-size:14px;font-weight:500;border-radius:4px;cursor:pointer;margin-bottom:24px;">Continue with Google</button>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+          <span style="font-size:12px;color:var(--stone);">or</span>
+          <div style="flex:1;height:1px;background:var(--border);"></div>
+        </div>
+        <label class="input-label">PHONE NUMBER</label>
+        <input class="input-field" type="tel" value="+1 (902) 555-0142" readonly>
+        <div style="height:32px;"></div>
+        <button class="btn-primary" onclick="goTo(3)">SEND CODE</button>
+        <p style="font-size:11px;color:var(--stone);margin-top:40px;line-height:1.5;">By continuing, you agree to our Terms of Service and Privacy Policy. We never share your data.</p>
+      </div>
+    </div>
+
+    <!-- Screen 3: OTP -->
+    <div class="screen" id="screen-3">
+      <span class="back-arrow" onclick="goTo(2)">&larr;</span>
+      <h1 class="screen-title">Check your phone.</h1>
+      <p class="screen-subtitle">Code sent to +1 (902) &bull;&bull;&bull;-0142</p>
+      <div style="display:flex;gap:12px;margin-bottom:40px;">
+        <div style="width:56px;height:56px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text);position:relative;">4<span style="position:absolute;right:4px;top:12px;bottom:12px;width:1.5px;background:var(--accent);animation:blink 1s infinite;"></span></div>
+        <div style="width:56px;height:56px;border:1px solid var(--border);"></div>
+        <div style="width:56px;height:56px;border:1px solid var(--border);"></div>
+        <div style="width:56px;height:56px;border:1px solid var(--border);"></div>
+      </div>
+      <button class="btn-primary" onclick="goTo(4)">VERIFY</button>
+      <button class="btn-secondary">Didn't get it? Resend</button>
+    </div>
+
+    <!-- Screen 4: Use Case -->
+    <div class="screen" id="screen-4">
+      <span class="back-arrow" onclick="goTo(3)">&larr;</span>
+      <h1 class="screen-title">Who needs protection?</h1>
+      <p class="screen-subtitle">Choose a plan. You can always add more later.</p>
+      <div style="border-top:1px solid var(--border);padding:24px 0;cursor:pointer;" onclick="goTo(5)">
+        <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px;">Kin Connect</div>
+        <div style="font-size:13px;color:var(--stone);line-height:1.5;margin-bottom:6px;">For aging parents. Manage their contact safety from anywhere.</div>
+        <span style="font-size:11px;color:var(--accent);font-weight:500;">popular</span>
+      </div>
+      <div style="border-top:1px solid var(--border);padding:24px 0;opacity:0.35;">
+        <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px;">Pet Trace</div>
+        <div style="font-size:13px;color:var(--stone);line-height:1.5;margin-bottom:6px;">Smart tags for pets. Instant finder-to-owner relay.</div>
+        <span style="font-size:11px;color:var(--stone);">coming soon</span>
+      </div>
+      <div style="border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:24px 0;opacity:0.35;">
+        <div style="font-size:18px;font-weight:600;color:var(--text);margin-bottom:6px;">Kid Safe</div>
+        <div style="font-size:13px;color:var(--stone);line-height:1.5;margin-bottom:6px;">For children in public spaces. Controlled reach without exposure.</div>
+        <span style="font-size:11px;color:var(--stone);">coming soon</span>
+      </div>
+      <div style="height:32px;"></div>
+      <button class="btn-primary" onclick="goTo(5)">CONTINUE</button>
+    </div>
+
+    <!-- Screen 5: Profile -->
+    <div class="screen" id="screen-5">
+      <span class="back-arrow" onclick="goTo(4)">&larr;</span>
+      <h1 class="screen-title">Tell us about them.</h1>
+      <p class="screen-subtitle">Just what a stranger needs to know. Nothing more.</p>
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:32px;">
+        <div style="width:80px;height:80px;border-radius:50%;border:1.5px dashed var(--accent);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--accent);">+</div>
+        <span style="font-size:12px;color:var(--stone);margin-top:8px;">add photo</span>
+      </div>
+      <label class="input-label">FIRST NAME ONLY</label>
+      <input class="input-field" value="Margaret" readonly style="font-size:20px;margin-bottom:28px;">
+      <label class="input-label">CARE NOTE</label>
+      <textarea class="input-field" readonly style="font-size:14px;line-height:1.6;resize:none;height:80px;border-bottom:1px solid var(--border);">Margaret has early-stage Alzheimer's. Please be patient with her.</textarea>
+      <p style="font-size:11px;color:var(--stone);margin-top:8px;margin-bottom:32px;">This is shown to anyone who scans the QR.</p>
+      <button class="btn-primary" onclick="goTo(6)">NEXT</button>
+    </div>
+
+    <!-- Screen 6: Emergency Contacts -->
+    <div class="screen" id="screen-6">
+      <span class="back-arrow" onclick="goTo(5)">&larr;</span>
+      <h1 class="screen-title">Who gets the alert?</h1>
+      <p class="screen-subtitle">When someone scans Margaret's QR, we notify these people instantly.</p>
+      <div style="margin-bottom:24px;">
+        <div style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">YOU</div>
+        <div style="font-size:16px;color:var(--text);font-weight:500;margin-bottom:4px;">Sarah Chen</div>
+        <div style="font-size:13px;color:var(--stone);">+1 (902) 555-0142 &middot; sarah@email.com</div>
+        <span style="font-size:12px;color:var(--stone);text-decoration:underline;cursor:pointer;display:inline-block;margin-top:6px;">edit</span>
+      </div>
+      <div style="height:1px;background:var(--border);margin-bottom:24px;"></div>
+      <div style="border:1px dashed var(--border);padding:20px;text-align:center;margin-bottom:40px;cursor:pointer;">
+        <div style="font-size:20px;color:var(--stone);margin-bottom:6px;">+</div>
+        <div style="font-size:13px;color:var(--stone);">sibling, partner, or caregiver</div>
+      </div>
+      <button class="btn-primary" onclick="goTo(7)">ACTIVATE MARGARET'S HUSHREACH</button>
+    </div>
+
+    <!-- Screen 7: QR Live -->
+    <div class="screen" id="screen-7">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding-bottom:40px;">
+        <div style="font-size:11px;color:var(--accent);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:24px;">activated</div>
+        <div style="font-size:36px;font-weight:300;letter-spacing:0.06em;color:var(--text);margin-bottom:32px;">Margaret</div>
+        <div style="background:#fff;padding:24px;margin-bottom:16px;">
+          <svg width="140" height="140" viewBox="0 0 140 140">
+            <rect width="140" height="140" fill="#fff"/>
+            <g fill="#111">
+              <rect x="10" y="10" width="8" height="8"/><rect x="18" y="10" width="8" height="8"/><rect x="26" y="10" width="8" height="8"/><rect x="34" y="10" width="8" height="8"/><rect x="42" y="10" width="8" height="8"/><rect x="50" y="10" width="8" height="8"/><rect x="58" y="10" width="8" height="8"/>
+              <rect x="10" y="18" width="8" height="8"/><rect x="58" y="18" width="8" height="8"/>
+              <rect x="10" y="26" width="8" height="8"/><rect x="26" y="26" width="8" height="8"/><rect x="34" y="26" width="8" height="8"/><rect x="42" y="26" width="8" height="8"/><rect x="58" y="26" width="8" height="8"/>
+              <rect x="10" y="34" width="8" height="8"/><rect x="26" y="34" width="8" height="8"/><rect x="34" y="34" width="8" height="8"/><rect x="42" y="34" width="8" height="8"/><rect x="58" y="34" width="8" height="8"/>
+              <rect x="10" y="42" width="8" height="8"/><rect x="26" y="42" width="8" height="8"/><rect x="34" y="42" width="8" height="8"/><rect x="42" y="42" width="8" height="8"/><rect x="58" y="42" width="8" height="8"/>
+              <rect x="10" y="50" width="8" height="8"/><rect x="58" y="50" width="8" height="8"/>
+              <rect x="10" y="58" width="8" height="8"/><rect x="18" y="58" width="8" height="8"/><rect x="26" y="58" width="8" height="8"/><rect x="34" y="58" width="8" height="8"/><rect x="42" y="58" width="8" height="8"/><rect x="50" y="58" width="8" height="8"/><rect x="58" y="58" width="8" height="8"/>
+              <rect x="74" y="10" width="8" height="8"/><rect x="90" y="10" width="8" height="8"/><rect x="106" y="10" width="8" height="8"/><rect x="114" y="10" width="8" height="8"/>
+              <rect x="74" y="18" width="8" height="8"/><rect x="82" y="18" width="8" height="8"/><rect x="98" y="18" width="8" height="8"/><rect x="122" y="18" width="8" height="8"/>
+              <rect x="74" y="26" width="8" height="8"/><rect x="90" y="26" width="8" height="8"/><rect x="106" y="26" width="8" height="8"/><rect x="114" y="26" width="8" height="8"/><rect x="122" y="26" width="8" height="8"/>
+              <rect x="82" y="34" width="8" height="8"/><rect x="98" y="34" width="8" height="8"/><rect x="106" y="34" width="8" height="8"/><rect x="122" y="34" width="8" height="8"/>
+              <rect x="74" y="42" width="8" height="8"/><rect x="82" y="42" width="8" height="8"/><rect x="90" y="42" width="8" height="8"/><rect x="114" y="42" width="8" height="8"/>
+              <rect x="82" y="50" width="8" height="8"/><rect x="98" y="50" width="8" height="8"/><rect x="106" y="50" width="8" height="8"/><rect x="122" y="50" width="8" height="8"/>
+              <rect x="74" y="58" width="8" height="8"/><rect x="90" y="58" width="8" height="8"/><rect x="98" y="58" width="8" height="8"/><rect x="106" y="58" width="8" height="8"/>
+              <rect x="82" y="74" width="8" height="8"/><rect x="90" y="74" width="8" height="8"/><rect x="98" y="74" width="8" height="8"/><rect x="114" y="74" width="8" height="8"/><rect x="122" y="74" width="8" height="8"/>
+              <rect x="74" y="82" width="8" height="8"/><rect x="82" y="82" width="8" height="8"/><rect x="106" y="82" width="8" height="8"/><rect x="122" y="82" width="8" height="8"/>
+              <rect x="82" y="90" width="8" height="8"/><rect x="90" y="90" width="8" height="8"/><rect x="98" y="90" width="8" height="8"/><rect x="106" y="90" width="8" height="8"/><rect x="114" y="90" width="8" height="8"/>
+              <rect x="74" y="98" width="8" height="8"/><rect x="82" y="98" width="8" height="8"/><rect x="106" y="98" width="8" height="8"/><rect x="122" y="98" width="8" height="8"/>
+              <rect x="74" y="106" width="8" height="8"/><rect x="90" y="106" width="8" height="8"/><rect x="98" y="106" width="8" height="8"/><rect x="122" y="106" width="8" height="8"/>
+              <rect x="74" y="114" width="8" height="8"/><rect x="82" y="114" width="8" height="8"/><rect x="90" y="114" width="8" height="8"/><rect x="98" y="114" width="8" height="8"/><rect x="106" y="114" width="8" height="8"/><rect x="114" y="114" width="8" height="8"/><rect x="122" y="114" width="8" height="8"/>
+              <rect x="74" y="122" width="8" height="8"/><rect x="106" y="122" width="8" height="8"/><rect x="114" y="122" width="8" height="8"/><rect x="122" y="122" width="8" height="8"/>
+              <rect x="10" y="74" width="8" height="8"/><rect x="18" y="74" width="8" height="8"/><rect x="34" y="74" width="8" height="8"/><rect x="42" y="74" width="8" height="8"/><rect x="58" y="74" width="8" height="8"/>
+              <rect x="10" y="82" width="8" height="8"/><rect x="26" y="82" width="8" height="8"/><rect x="42" y="82" width="8" height="8"/><rect x="50" y="82" width="8" height="8"/><rect x="58" y="82" width="8" height="8"/>
+              <rect x="10" y="90" width="8" height="8"/><rect x="18" y="90" width="8" height="8"/><rect x="26" y="90" width="8" height="8"/><rect x="34" y="90" width="8" height="8"/><rect x="42" y="90" width="8" height="8"/><rect x="50" y="90" width="8" height="8"/><rect x="58" y="90" width="8" height="8"/>
+              <rect x="10" y="98" width="8" height="8"/><rect x="58" y="98" width="8" height="8"/>
+              <rect x="10" y="106" width="8" height="8"/><rect x="26" y="106" width="8" height="8"/><rect x="34" y="106" width="8" height="8"/><rect x="42" y="106" width="8" height="8"/><rect x="58" y="106" width="8" height="8"/>
+              <rect x="10" y="114" width="8" height="8"/><rect x="26" y="114" width="8" height="8"/><rect x="34" y="114" width="8" height="8"/><rect x="42" y="114" width="8" height="8"/><rect x="58" y="114" width="8" height="8"/>
+              <rect x="10" y="122" width="8" height="8"/><rect x="18" y="122" width="8" height="8"/><rect x="26" y="122" width="8" height="8"/><rect x="34" y="122" width="8" height="8"/><rect x="42" y="122" width="8" height="8"/><rect x="50" y="122" width="8" height="8"/><rect x="58" y="122" width="8" height="8"/>
+            </g>
+          </svg>
+        </div>
+        <div style="font-size:12px;font-family:'Courier New',monospace;color:var(--stone);margin-bottom:16px;">hushreach.com/r/a3xK9p2L</div>
+        <div style="font-size:12px;color:var(--stone);margin-bottom:32px;display:flex;align-items:center;gap:6px;">
+          <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;display:inline-block;"></span>
+          Kin Connect &middot; Active
+        </div>
+        <button class="btn-primary" onclick="goTo(8)" style="width:100%;">DOWNLOAD PRINT-READY PDF</button>
+        <button class="btn-secondary" onclick="goTo(8)">save as image</button>
+        <div style="font-size:12px;color:var(--accent);margin-top:24px;cursor:pointer;">Install to home screen for instant alerts &rarr;</div>
+      </div>
+    </div>
+
+    <!-- Screen 8: Dashboard -->
+    <div class="screen" id="screen-8">
+      <div style="margin-bottom:4px;font-size:12px;color:var(--stone);">Sarah</div>
+      <h1 class="screen-title" style="margin-bottom:24px;">Inbox</h1>
+
+      <div style="border-left:3px solid var(--danger);padding:16px 0 16px 16px;border-bottom:1px solid var(--border);position:relative;cursor:pointer;" onclick="goTo(9)">
+        <div style="position:absolute;top:16px;right:0;font-size:11px;color:var(--stone);">2 min ago</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.5;margin-bottom:8px;padding-right:60px;">I found Margaret at the waterfront. She seems confused...</div>
+        <div style="font-size:11px;color:var(--danger);">urgent &middot; halifax waterfront</div>
+      </div>
+
+      <div style="border-left:3px solid var(--accent);padding:16px 0 16px 16px;border-bottom:1px solid var(--border);position:relative;">
+        <div style="position:absolute;top:16px;right:0;font-size:11px;color:var(--stone);">yesterday</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.5;margin-bottom:8px;padding-right:60px;">Hi, I'm a home care worker visiting Margaret today for her scheduled...</div>
+        <div style="font-size:11px;color:var(--accent);">routine &middot; scheduled visit</div>
+      </div>
+
+      <div style="border-left:3px solid var(--amber);padding:16px 0 16px 16px;border-bottom:1px solid var(--border);position:relative;">
+        <div style="position:absolute;top:16px;right:0;font-size:11px;color:var(--stone);">2 days ago</div>
+        <div style="font-size:14px;color:var(--text);line-height:1.5;margin-bottom:8px;padding-right:60px;text-decoration:line-through;opacity:0.6;">URGENT: Your mother has won a prize. Please send your bank...</div>
+        <div style="font-size:11px;color:var(--amber);">scam likely &middot; blocked</div>
+      </div>
+
+      <div class="bottom-nav">
+        <span class="active">inbox</span>
+        <span>profiles</span>
+        <span>activity</span>
+      </div>
+
+      <div style="height:80px;"></div>
+      <button class="btn-primary" onclick="goTo(9)">VIEW URGENT MESSAGE</button>
+    </div>
+
+    <!-- Screen 9: Message Detail -->
+    <div class="screen" id="screen-9">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+        <span class="back-arrow" onclick="goTo(8)" style="margin-bottom:0;">&larr;</span>
+        <span style="font-size:12px;color:var(--stone);">2 minutes ago</span>
+      </div>
+      <p style="font-size:15px;color:var(--text);line-height:1.7;margin-bottom:28px;">I found Margaret at the waterfront near Bishop's Landing. She seems confused and doesn't know how to get home. She's safe with me right now.</p>
+
+      <div style="border-left:3px solid var(--danger);padding:12px 16px;margin-bottom:20px;">
+        <div style="font-size:12px;color:var(--danger);line-height:1.5;">Flagged urgent &mdash; keywords: confused, doesn't know, safe with me</div>
+      </div>
+
+      <div style="font-size:13px;color:var(--stone);margin-bottom:40px;">&#x1F4CD; Halifax Waterfront, NS &mdash; 1.2km from home</div>
+
+      <div style="border-top:1px solid var(--border);padding-top:20px;display:flex;align-items:center;gap:12px;">
+        <input class="input-field" placeholder="Type your reply..." style="flex:1;margin:0;border-bottom:1px solid var(--border);">
+        <span style="font-size:12px;color:var(--accent);font-weight:600;letter-spacing:0.08em;cursor:pointer;" onclick="goTo(10)">SEND</span>
+      </div>
+
+      <div style="height:24px;"></div>
+      <button class="btn-secondary" onclick="goTo(10)">view finder's scan page &rarr;</button>
+    </div>
+
+    <!-- Screen 10: Finder Scan Page (Light) -->
+    <div class="screen screen-light" id="screen-10" style="background:var(--light-bg);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;">
+        <span style="font-size:12px;color:#BBB;letter-spacing:0.05em;">hushreach</span>
+        <span class="back-arrow" onclick="goTo(9)" style="margin-bottom:0;color:#999;font-size:14px;">&larr; back</span>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:24px;">
+        <div style="width:72px;height:72px;border-radius:50%;background:#E8E4DE;display:flex;align-items:center;justify-content:center;font-size:28px;color:#8A7E6B;font-weight:300;margin-bottom:12px;">M</div>
+        <div style="font-size:24px;color:var(--light-text);font-weight:600;letter-spacing:-0.02em;margin-bottom:8px;">Margaret</div>
+        <div style="font-size:14px;color:#6B6B6B;text-align:center;line-height:1.5;max-width:280px;">Margaret has early-stage Alzheimer's. Please be patient with her.</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:6px;justify-content:center;margin-bottom:28px;">
+        <span style="font-size:12px;">&#x1F512;</span>
+        <span style="font-size:11px;color:#999;">Your phone number is never collected or stored.</span>
+      </div>
+
+      <div style="font-size:13px;color:#6B6B6B;margin-bottom:16px;font-weight:500;">Send a message to Margaret's family</div>
+
+      <div style="border-left:3px solid var(--accent);padding:12px 14px;margin-bottom:8px;font-size:13px;color:var(--light-text);cursor:pointer;background:#F0EDE8;">I found Margaret and she seems confused</div>
+      <div style="border-left:3px solid var(--accent);padding:12px 14px;margin-bottom:8px;font-size:13px;color:var(--light-text);cursor:pointer;background:#F0EDE8;">I'm a healthcare worker visiting Margaret</div>
+      <div style="border-left:3px solid var(--accent);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--light-text);cursor:pointer;background:#F0EDE8;">I need to reach Margaret's family</div>
+
+      <textarea style="width:100%;border:1px solid #DDD;background:#fff;padding:12px;font-size:13px;font-family:var(--font);border-radius:2px;resize:none;height:60px;color:var(--light-text);margin-bottom:16px;" placeholder="write your own message"></textarea>
+
+      <button class="btn-primary" style="background:var(--accent);color:#fff;">SEND TO FAMILY</button>
+
+      <div style="text-align:center;margin-top:32px;font-size:11px;color:#BBB;">Powered by HushReach &middot; Privacy policy</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="nav-controls">
+  <button onclick="prev()">&larr; Prev</button>
+  <span id="screen-indicator">screen 1 of 10</span>
+  <button onclick="next()">Next &rarr;</button>
+</div>
+
+<script>
+let current = 1;
+const total = 10;
+
+function goTo(n) {
+  if (n < 1 || n > total) return;
+  document.getElementById('screen-' + current).classList.remove('active');
+  current = n;
+  const target = document.getElementById('screen-' + current);
+  target.classList.add('active');
+  target.scrollTop = 0;
+  document.getElementById('screen-indicator').textContent = 'screen ' + current + ' of ' + total;
+}
+
+function next() { goTo(current + 1); }
+function prev() { goTo(current - 1); }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight') next();
+  if (e.key === 'ArrowLeft') prev();
+});
+</script>
+</body>
+</html>
